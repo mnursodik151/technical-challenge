@@ -1,0 +1,39 @@
+# This for development purpose, this can be integrated with VSCode Remote
+version: '3.7'
+
+services:
+  nest:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+
+    command: yarn start:dev
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+      
+  mongo:
+    image: mongo
+    restart: always
+    ports:
+      - ${MONGO_DB_PORT}:${MONGO_DB_PORT}
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - ${MONGO_EXPRESS_PORT}:${MONGO_EXPRESS_PORT}
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:${MONGO_DB_PORT}/
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_LOGIN}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD}
+    
