@@ -5,7 +5,7 @@ services:
   nest:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: technical-challenge/Dockerfile
       target: development
 
     command: yarn start:dev
@@ -13,18 +13,20 @@ services:
       - NODE_ENV=development
     volumes:
       - .:/usr/src/app
+      - /usr/src/app/node_modules
     ports:
       - ${APP_PORT}:${APP_PORT}
-      
+    depends_on:
+      - mongo
+      - rabbitmq
+
   mongo:
     image: mongo
     restart: always
     ports:
       - ${MONGO_DB_PORT}:${MONGO_DB_PORT}
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-      
+    volumes:
+      - ./mongo-data:/data/db
 
   mongo-express:
     image: mongo-express
@@ -32,8 +34,18 @@ services:
     ports:
       - ${MONGO_EXPRESS_PORT}:${MONGO_EXPRESS_PORT}
     environment:
-      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:${MONGO_DB_PORT}/
+      ME_CONFIG_MONGODB_URL: mongodb://@mongo:${MONGO_DB_PORT}/
       ME_CONFIG_MONGODB_SERVER: mongo
       ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_LOGIN}
       ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD}
-    
+    depends_on:
+      - mongo
+
+  rabbitmq:
+    image: "rabbitmq:3.12-management"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBIT_MQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBIT_MQ_PASSWORD}

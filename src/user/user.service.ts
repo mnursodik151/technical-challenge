@@ -35,6 +35,9 @@ export class UserService {
       $or: [{ username: usernameOrEmail }, { email: usernameOrEmail }]
     }).exec();
 
+    if(!user)
+      throw new NotFoundException
+
     const result = user.toObject();
     if (!result.about)
       result.about = undefined
