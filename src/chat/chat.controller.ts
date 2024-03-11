@@ -26,4 +26,15 @@ export class ChatController {
     @Request() req): Promise<any> {
     return this.chatService.getMessages(req.user.username);
   }
+
+  @HttpCode(HttpStatus.OK)
+  @Get('notification')
+  async subsctibeNotification(
+    @Request() req): Promise<any> {
+    let result = null
+    await this.chatService.subscribeToQueue(req.user.username, (messages) => {
+      result = messages
+    });
+    return result;
+  }
 }

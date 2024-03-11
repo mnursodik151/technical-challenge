@@ -1,9 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ChatMessageRequestDto } from './dto/chat.message.request.dto';
 import { Chat } from 'src/schemas/chat.schema';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { AmqpConnectionManager, ChannelWrapper, connect } from 'amqp-connection-manager'
+import { AmqpConnectionManager, Channel, ChannelWrapper, connect } from 'amqp-connection-manager'
 import { ConfigService } from '@nestjs/config';
 import { ChatMessagesResponseDto } from './dto/chat.messages.response.dto';
 
@@ -11,6 +11,7 @@ import { ChatMessagesResponseDto } from './dto/chat.messages.response.dto';
 export class ChatService {
   private channel: ChannelWrapper;
   private connection: AmqpConnectionManager;
+  private readonly logger = new Logger(ChatService.name)
 
   constructor(
     private readonly configService: ConfigService,
@@ -27,6 +28,21 @@ export class ChatService {
       },
     });
   }
+  
+  public async subscribeToQueue(user: string, callback: (message: any) => void): Promise<void> {
+    this.channel.assertQueue(`notification_${user}`)
+    return this.channel.addSetup(async (channel: Channel) => {
+      await channel.consume(`notification_${user}`, (message) => {
+        if (message) {
+          const content = message.content.toString();
+          const parsedMessage = JSON.parse(content);
+          this.logger.log(parsedMessage);
+          callback(parsedMessage);
+          channel.ack(message);
+        }
+      });
+    });
+  }
 
   async sendMessage(fromUser: string, chatMessageDto: ChatMessageRequestDto): Promise<Chat> {
     const chatMessage = new this.chatModel({
@@ -41,6 +57,8 @@ export class ChatService {
 
     return chatMessage.save()
   }
+
+  
 
   async getMessages(toUser: string) {
     const result = await this.chatModel.aggregate([
