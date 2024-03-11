@@ -4,7 +4,7 @@ export class ChatMessagesResponseDto {
   conversations: Conversation[]
 }
 
-export class Conversation {
+class Conversation {
   withUser: string
 
   chats: Chat[]

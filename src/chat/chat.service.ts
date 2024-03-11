@@ -5,7 +5,7 @@ import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { AmqpConnectionManager, ChannelWrapper, connect } from 'amqp-connection-manager'
 import { ConfigService } from '@nestjs/config';
-import { ChatMessagesResponseDto, Conversation } from './dto/chat.messages.response.dto';
+import { ChatMessagesResponseDto } from './dto/chat.messages.response.dto';
 
 @Injectable()
 export class ChatService {
